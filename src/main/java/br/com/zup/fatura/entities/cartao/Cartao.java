@@ -20,4 +20,8 @@ public class Cartao {
         this.idLegado = idLegado;
         this.email = email;
     }
+
+    public String getIdLegado() {
+        return idLegado;
+    }
 }
