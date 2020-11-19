@@ -11,13 +11,18 @@ import feign.FeignException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.text.NumberFormat;
+
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @RestController
@@ -66,7 +71,10 @@ public class CartaoController {
         saldo -= fatura.getTransacoes().stream().mapToDouble(f -> f.getValor().doubleValue()).sum();
 
 
-        return ResponseEntity.ok(String.format("saldo: %.2f",saldo));
-    }
+        //Definir tipo application/json
+        final HttpHeaders httpHeaders= new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
 
+        return ResponseEntity.ok().headers(httpHeaders).body(String.format("{\"saldo\": \"%s\", \"mesFatura\": %d}",NumberFormat.getCurrencyInstance().format(saldo), fatura.getMesFatura()));
+    }
 }
