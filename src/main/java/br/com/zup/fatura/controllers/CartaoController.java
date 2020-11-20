@@ -86,9 +86,9 @@ public class CartaoController {
         return ResponseEntity.ok().headers(httpHeaders).body(String.format("{\"saldo\": \"%s\", \"mesFatura\": %d}",NumberFormat.getCurrencyInstance().format(saldo), fatura.getMesFatura()));
     }
 
-    @PostMapping("/parcelas/{nCartao}/{mesFatura}")
+    @PostMapping("/parcelas/{nCartao}/{mesFatura}/{anoFatura}")
     @Transactional
-    public ResponseEntity<String> cadastroParcela(@PathVariable("nCartao") String nCartao, @PathVariable("mesFatura") int mesFatura, @RequestBody @Valid ParcelaNovoRequest novaParcela, UriComponentsBuilder uriComponentsBuilder) {
+    public ResponseEntity<String> cadastroParcela(@PathVariable("nCartao") String nCartao, @PathVariable("mesFatura") int mesFatura, @PathVariable("anoFatura") int anoFatura, @RequestBody @Valid ParcelaNovoRequest novaParcela, UriComponentsBuilder uriComponentsBuilder) {
 
         Optional<Cartao> buscaCartao = cartaoRepository.findByIdLegado(nCartao);
 
@@ -105,18 +105,21 @@ public class CartaoController {
         List<Transacao> transacaoList = transacaoRepository.findByCartaoOrderByEfetivadaEmDesc(cartao);
 
         transacaoList = transacaoList.stream()
-                .filter(t -> t.getEfetivadaEm().getMonthValue() == mesFatura)
+                .filter(t ->
+                        t.getEfetivadaEm().getMonthValue() == mesFatura
+                        && t.getEfetivadaEm().getYear() == anoFatura
+                )
                 .collect(Collectors.toList());
 
         if (transacaoList.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        Parcela parcela = new Parcela(novaParcela.getQuantidade(),novaParcela.getValor(), mesFatura, cartao);
+        Parcela parcela = new Parcela(novaParcela.getQuantidade(),novaParcela.getValor(), mesFatura, anoFatura, cartao);
 
         manager.persist(parcela);
 
-        URI link = uriComponentsBuilder.path("/cartoes/parcelas/{idFatura}/").buildAndExpand(parcela.getId()).toUri();
+        URI link = uriComponentsBuilder.path("/cartoes/parcelas/{idParcela}/").buildAndExpand(parcela.getId()).toUri();
         return ResponseEntity.created(link).build();
     }
 }
