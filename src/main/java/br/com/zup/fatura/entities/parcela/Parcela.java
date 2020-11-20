@@ -38,6 +38,8 @@ public class Parcela {
     @Positive
     private int anoFatura;
 
+    private StatusNegociacao statusNegociacao;
+
     private LocalDateTime cadastradoEm = LocalDateTime.now();
 
     @NotNull
@@ -48,11 +50,12 @@ public class Parcela {
     @Deprecated
     public Parcela(){}
 
-    public Parcela(@Positive int quantidade, @NotNull @Positive BigDecimal valor, @NotNull @Min(1) @Max(12) int mesFatura, @NotNull @Positive int anoFatura, @NotNull @Valid Cartao cartao) {
+    public Parcela(@Positive int quantidade, @NotNull @Positive BigDecimal valor, @NotNull @Min(1) @Max(12) int mesFatura, @NotNull @Positive int anoFatura, StatusNegociacao statusNegociacao, @NotNull @Valid Cartao cartao) {
         this.quantidade = quantidade;
         this.valor = valor;
         this.mesFatura = mesFatura;
         this.anoFatura = anoFatura;
+        this.statusNegociacao = statusNegociacao;
         this.cartao = cartao;
     }
 

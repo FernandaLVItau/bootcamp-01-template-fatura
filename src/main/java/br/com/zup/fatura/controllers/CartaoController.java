@@ -4,8 +4,7 @@ import br.com.zup.fatura.clientswebservices.CartoesClient;
 import br.com.zup.fatura.entities.cartao.Cartao;
 import br.com.zup.fatura.entities.cartao.retornolegado.DadosCartaoRetornoLegado;
 import br.com.zup.fatura.entities.fatura.Fatura;
-import br.com.zup.fatura.entities.parcela.Parcela;
-import br.com.zup.fatura.entities.parcela.ParcelaNovoRequest;
+import br.com.zup.fatura.entities.parcela.*;
 import br.com.zup.fatura.entities.transacao.Transacao;
 import br.com.zup.fatura.repositories.CartaoRepository;
 import br.com.zup.fatura.repositories.TransacaoRepository;
@@ -115,7 +114,31 @@ public class CartaoController {
             return ResponseEntity.notFound().build();
         }
 
-        Parcela parcela = new Parcela(novaParcela.getQuantidade(),novaParcela.getValor(), mesFatura, anoFatura, cartao);
+        StatusNegociacao statusNegociacao = StatusNegociacao.NEGADO;
+
+        try {
+            logger.info("Envia para aprovação a negociação da parcela. nCartao: {};",cartao.getIdLegado());
+
+            ParcelaRequest parcelaRequest = new ParcelaRequest(mesFatura+"/"+anoFatura, novaParcela.getQuantidade(), novaParcela.getValor());
+
+            ParcelaRetornoLegado parcelaRetornoLegado = cartoesClient.enviarParcela(cartao.getIdLegado(), parcelaRequest);
+
+            statusNegociacao = parcelaRetornoLegado.getResultado();
+
+        } catch (FeignException e) {
+            int resultadoEsperadoStatusCode = 422;
+            String resultadoEsperadoTexto = "{\"resultado\":\"NEGADO\"}";
+            if (e.status() == resultadoEsperadoStatusCode
+                    && e.contentUTF8().equals(resultadoEsperadoTexto)) {
+                logger.info("Negado a negociação da parcela. numeroCartaoLegado: {}", cartao.getIdLegado());
+            }
+            else {
+                logger.warn("Erro ao solicitar negociação da parcela. nCartao: {}; statusRetorno: {}", cartao.getIdLegado(), e.status());
+                return ResponseEntity.status(500).body("Erro interno. Por favor tente novamente mais tarde");
+            }
+        }
+
+        Parcela parcela = new Parcela(novaParcela.getQuantidade(),novaParcela.getValor(), mesFatura, anoFatura, statusNegociacao, cartao);
 
         manager.persist(parcela);
 
