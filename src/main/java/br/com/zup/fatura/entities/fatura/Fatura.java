@@ -2,6 +2,8 @@ package br.com.zup.fatura.entities.fatura;
 
 import br.com.zup.fatura.entities.transacao.Transacao;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -9,9 +11,11 @@ import java.util.stream.Collectors;
 public class Fatura {
 
     private List<TransacaoFatura> transacoes;
+    @Min(1)
+    @Max(12)
     private int mesFatura;
 
-    public Fatura(List<Transacao> transacoes, int mesFatura) {
+    public Fatura(List<Transacao> transacoes, @Min(1) @Max(12) int mesFatura) {
         this.mesFatura = mesFatura;
         setTransacoes(transacoes);
     }
